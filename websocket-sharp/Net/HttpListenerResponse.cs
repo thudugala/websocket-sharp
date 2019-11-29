@@ -247,23 +247,33 @@ namespace WebSocketSharp.Net
     }
 
     /// <summary>
-    /// Gets or sets the HTTP headers sent to the client.
+    /// Gets or sets the collection of HTTP headers sent to the client.
     /// </summary>
     /// <value>
-    /// A <see cref="WebHeaderCollection"/> that contains the headers sent to the client.
+    /// A <see cref="WebHeaderCollection"/> that contains the headers sent to
+    /// the client.
     /// </value>
     /// <exception cref="InvalidOperationException">
-    /// The value specified for a set operation isn't valid for a response.
+    /// The value specified for a set operation is not valid for a response.
     /// </exception>
     public WebHeaderCollection Headers {
       get {
-        return _headers ?? (_headers = new WebHeaderCollection (HttpHeaderType.Response, false));
+        if (_headers == null)
+          _headers = new WebHeaderCollection (HttpHeaderType.Response, false);
+
+        return _headers;
       }
 
       set {
-        if (value != null && value.State != HttpHeaderType.Response)
-          throw new InvalidOperationException (
-            "The specified headers aren't valid for a response.");
+        if (value == null) {
+          _headers = null;
+          return;
+        }
+
+        if (value.State != HttpHeaderType.Response) {
+          var msg = "The value is not valid for a response.";
+          throw new InvalidOperationException (msg);
+        }
 
         _headers = value;
       }
@@ -712,7 +722,7 @@ namespace WebSocketSharp.Net
     #region Public Methods
 
     /// <summary>
-    /// Closes the connection to the client without returning a response.
+    /// Closes the connection to the client without sending a response.
     /// </summary>
     public void Abort ()
     {
@@ -723,8 +733,8 @@ namespace WebSocketSharp.Net
     }
 
     /// <summary>
-    /// Adds an HTTP header with the specified <paramref name="name"/> and
-    /// <paramref name="value"/> to the headers for the response.
+    /// Adds or updates an HTTP header with the specified name and value in
+    /// the headers for the response.
     /// </summary>
     /// <param name="name">
     /// A <see cref="string"/> that represents the name of the header to add.
@@ -737,7 +747,8 @@ namespace WebSocketSharp.Net
     /// </exception>
     /// <exception cref="ArgumentException">
     ///   <para>
-    ///   <paramref name="name"/> or <paramref name="value"/> contains invalid characters.
+    ///   <paramref name="name"/> or <paramref name="value"/> contains
+    ///   an invalid character.
     ///   </para>
     ///   <para>
     ///   -or-
@@ -747,7 +758,8 @@ namespace WebSocketSharp.Net
     ///   </para>
     /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// The length of <paramref name="value"/> is greater than 65,535 characters.
+    /// The length of <paramref name="value"/> is greater than 65,535
+    /// characters.
     /// </exception>
     /// <exception cref="InvalidOperationException">
     /// The header cannot be allowed to add to the current headers.
@@ -772,21 +784,24 @@ namespace WebSocketSharp.Net
     }
 
     /// <summary>
-    /// Appends a <paramref name="value"/> to the specified HTTP header sent with the response.
+    /// Appends an HTTP header with the specified name and value to
+    /// the headers for the response.
     /// </summary>
     /// <param name="name">
-    /// A <see cref="string"/> that represents the name of the header to append
-    /// <paramref name="value"/> to.
+    /// A <see cref="string"/> that represents the name of the header to
+    /// append.
     /// </param>
     /// <param name="value">
-    /// A <see cref="string"/> that represents the value to append to the header.
+    /// A <see cref="string"/> that represents the value of the header to
+    /// append.
     /// </param>
     /// <exception cref="ArgumentNullException">
     /// <paramref name="name"/> is <see langword="null"/> or empty.
     /// </exception>
     /// <exception cref="ArgumentException">
     ///   <para>
-    ///   <paramref name="name"/> or <paramref name="value"/> contains invalid characters.
+    ///   <paramref name="name"/> or <paramref name="value"/> contains
+    ///   an invalid character.
     ///   </para>
     ///   <para>
     ///   -or-
@@ -796,10 +811,11 @@ namespace WebSocketSharp.Net
     ///   </para>
     /// </exception>
     /// <exception cref="ArgumentOutOfRangeException">
-    /// The length of <paramref name="value"/> is greater than 65,535 characters.
+    /// The length of <paramref name="value"/> is greater than 65,535
+    /// characters.
     /// </exception>
     /// <exception cref="InvalidOperationException">
-    /// The current headers cannot allow the header to append a value.
+    /// The header cannot be allowed to append to the current headers.
     /// </exception>
     public void AppendHeader (string name, string value)
     {
@@ -807,7 +823,7 @@ namespace WebSocketSharp.Net
     }
 
     /// <summary>
-    /// Returns the response to the client and releases the resources used by
+    /// Sends the response to the client and releases the resources used by
     /// this instance.
     /// </summary>
     public void Close ()
@@ -819,7 +835,7 @@ namespace WebSocketSharp.Net
     }
 
     /// <summary>
-    /// Returns the response with the specified entity body data to the client
+    /// Sends the response with the specified entity body data to the client
     /// and releases the resources used by this instance.
     /// </summary>
     /// <param name="responseEntity">
@@ -978,14 +994,14 @@ namespace WebSocketSharp.Net
     #region Explicit Interface Implementations
 
     /// <summary>
-    /// Releases all resources used by the <see cref="HttpListenerResponse"/>.
+    /// Releases all resources used by this instance.
     /// </summary>
     void IDisposable.Dispose ()
     {
       if (_disposed)
         return;
 
-      close (true); // Same as the Abort method.
+      close (true);
     }
 
     #endregion
